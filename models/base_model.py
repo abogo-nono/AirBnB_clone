@@ -8,6 +8,8 @@ import models
 
 
 class BaseModel:
+    TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
+    
     """
     BaseModel class represents a base model for other classes to inherit from. It provides methods for initialization, string representation, saving instances, and converting instances to dictionaries for serialization.
 
@@ -25,7 +27,7 @@ class BaseModel:
     Returns:
         None
     """
-    
+
     def __init__(self, **kwargs) -> None:
         """
         Initialize a new instance of the BaseModel class.
@@ -46,14 +48,13 @@ class BaseModel:
                 if k == "__class__":
                     continue
                 if k in ['created_at', 'updated_at']:
-                    v = datetime.fromisoformat(v)
+                    v = datetime.strptime(v, self.TIME_FORMAT)
                 setattr(self, k, v)
         else:
             self.id = str(uuid4())
             self.created_at = datetime.now()
             self.updated_at = self.created_at
             models.storage.new(self)
-        
     
     def __str__(self) -> str:
         """
@@ -62,8 +63,7 @@ class BaseModel:
         Returns:
             str: A string containing the class name, id, and dictionary of instance attributes.
         """
-        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
-
+        return "[{}] ({}) {}".format(self.__class__.__name__, self.id, self.__dict__)
 
     def save(self):
         """
@@ -78,7 +78,6 @@ class BaseModel:
         self.updated_at = datetime.now()
         models.storage.save()
         
-        
     def to_dict(self) -> dict:
         """
         Return a dictionary representation of the BaseModel instance, including all instance attributes and necessary metadata for serialization.
@@ -89,11 +88,11 @@ class BaseModel:
         Returns:
             dict: A dictionary containing the instance attributes along with '__class__', 'created_at', and 'updated_at' metadata in ISO format.
         """
-        to_json = self.__dict__
+        to_json = self.__dict__.copy()
         to_json['__class__'] = self.__class__.__name__
-        to_json['created_at'] = to_json['created_at'].isoformat()
-        to_json['updated_at'] = to_json['updated_at'].isoformat()
+
+        for k, v in to_json.items():
+            if isinstance(v, datetime):
+                to_json[k] = v.isoformat()
 
         return to_json
-
-
