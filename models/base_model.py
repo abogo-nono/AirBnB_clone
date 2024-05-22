@@ -1,3 +1,7 @@
+#!/usr/bin/python3
+"""Base model
+"""
+
 from datetime import datetime
 from uuid import uuid4
 import models
